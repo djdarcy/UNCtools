@@ -373,6 +373,6 @@ def join_unc_path(server: str, share: str, rest: str = "") -> str:
         A properly formatted UNC path.
     """
     if rest:
-        return f"\\\\{server}\\{share}\\{rest.lstrip('\\')}"
+        return f"{chr(92)}{chr(92)}{server}{chr(92)}{share}{chr(92)}{rest.lstrip(chr(92))}"
     else:
-        return f"\\\\{server}\\{share}"
+        return f"{chr(92)}{chr(92)}{server}{chr(92)}{share}"
