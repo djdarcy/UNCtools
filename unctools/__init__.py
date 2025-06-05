@@ -1,4 +1,4 @@
-"""
+r"""
 UNCtools - A comprehensive toolkit for handling UNC paths, network drives, and substituted drives.
 
 This package provides utilities for working with UNC paths (\\server\share) and network/substituted 
@@ -46,9 +46,13 @@ logger = logging.getLogger(__name__)
 from .converter import convert_to_local, convert_to_unc, normalize_path
 from .detector import (
     is_unc_path, is_network_drive, is_subst_drive, 
-    get_path_type, get_network_mappings
+    get_path_type, get_network_mappings, detect_path_issues
 )
-from .operations import safe_open, batch_convert, batch_copy
+from .operations import (
+    safe_open, safe_copy, batch_convert, batch_copy, 
+    process_files, file_exists, replace_in_file, batch_replace_in_files,
+    get_unc_path_elements, build_unc_path, is_path_accessible, find_accessible_path
+)
 
 # Determine if we're running on Windows
 IS_WINDOWS = os.name == 'nt'

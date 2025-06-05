@@ -9,6 +9,7 @@ import os
 import sys
 import platform
 import logging
+import importlib.util
 from typing import Dict, Tuple, List, Optional, Union, Any
 
 # Set up module-level logger
@@ -74,6 +75,40 @@ def get_platform_info() -> Dict[str, str]:
             logger.debug("Could not retrieve detailed Windows information")
     
     return info
+
+def is_module_available(module_name: str) -> bool:
+    """
+    Check if a module is available without importing it or triggering warnings.
+    
+    Args:
+        module_name: Name of the module to check
+        
+    Returns:
+        True if the module is available, False otherwise
+    """
+    spec = importlib.util.find_spec(module_name)
+    return spec is not None
+
+def safe_import(module_name: str, default=None):
+    """
+    Safely import a module, returning a default value if the import fails.
+    
+    This is useful for optional dependencies where you want to gracefully
+    handle missing modules without warnings or errors.
+    
+    Args:
+        module_name: Name of the module to import
+        default: Default value to return if the import fails (default: None)
+        
+    Returns:
+        The imported module if successful, or the default value if the import fails
+    """
+    if is_module_available(module_name):
+        try:
+            return importlib.import_module(module_name)
+        except ImportError:
+            pass
+    return default
 
 def path_separator() -> str:
     """

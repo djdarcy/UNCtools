@@ -31,6 +31,27 @@ if IS_WINDOWS:
 else:
     HAVE_WIN32SECURITY = False
 
+# Define or import constants for ACE types
+if IS_WINDOWS and HAVE_WIN32SECURITY:
+    # Use constants from win32security when available
+    ACCESS_ALLOWED_ACE_TYPE = win32security.ACCESS_ALLOWED_ACE_TYPE
+    ACCESS_DENIED_ACE_TYPE = win32security.ACCESS_DENIED_ACE_TYPE
+    SYSTEM_AUDIT_ACE_TYPE = win32security.SYSTEM_AUDIT_ACE_TYPE
+    
+    # SYSTEM_ALARM_ACE_TYPE may not be available in all versions
+    try:
+        SYSTEM_ALARM_ACE_TYPE = win32security.SYSTEM_ALARM_ACE_TYPE
+    except AttributeError:
+        # Define fallback value based on Windows SDK
+        SYSTEM_ALARM_ACE_TYPE = 3
+        logger.debug("win32security.SYSTEM_ALARM_ACE_TYPE not available, using fallback value")
+else:
+    # Define fallback values for non-Windows or without win32security
+    ACCESS_ALLOWED_ACE_TYPE = 0
+    ACCESS_DENIED_ACE_TYPE = 1
+    SYSTEM_AUDIT_ACE_TYPE = 2
+    SYSTEM_ALARM_ACE_TYPE = 3
+
 def get_file_security(path: str) -> Optional[Dict[str, Any]]:
     """
     Get security information for a file or directory.
@@ -117,10 +138,10 @@ def _get_ace_type_name(ace_type: int) -> str:
         A string describing the ACE type.
     """
     ace_types = {
-        win32security.ACCESS_ALLOWED_ACE_TYPE: "Allow",
-        win32security.ACCESS_DENIED_ACE_TYPE: "Deny",
-        win32security.SYSTEM_AUDIT_ACE_TYPE: "Audit",
-        win32security.SYSTEM_ALARM_ACE_TYPE: "Alarm"
+        ACCESS_ALLOWED_ACE_TYPE: "Allow",
+        ACCESS_DENIED_ACE_TYPE: "Deny",
+        SYSTEM_AUDIT_ACE_TYPE: "Audit",
+        SYSTEM_ALARM_ACE_TYPE: "Alarm"
     }
     return ace_types.get(ace_type, f"Unknown ({ace_type})")
 
@@ -135,16 +156,17 @@ def _get_ace_flags(ace_flags: int) -> List[str]:
         A list of strings describing the ACE flags.
     """
     flags = []
-    if ace_flags & win32security.OBJECT_INHERIT_ACE:
-        flags.append("Object Inherit")
-    if ace_flags & win32security.CONTAINER_INHERIT_ACE:
-        flags.append("Container Inherit")
-    if ace_flags & win32security.NO_PROPAGATE_INHERIT_ACE:
-        flags.append("No Propagate")
-    if ace_flags & win32security.INHERIT_ONLY_ACE:
-        flags.append("Inherit Only")
-    if ace_flags & win32security.INHERITED_ACE:
-        flags.append("Inherited")
+    if IS_WINDOWS and HAVE_WIN32SECURITY:
+        if ace_flags & win32security.OBJECT_INHERIT_ACE:
+            flags.append("Object Inherit")
+        if ace_flags & win32security.CONTAINER_INHERIT_ACE:
+            flags.append("Container Inherit")
+        if ace_flags & win32security.NO_PROPAGATE_INHERIT_ACE:
+            flags.append("No Propagate")
+        if ace_flags & win32security.INHERIT_ONLY_ACE:
+            flags.append("Inherit Only")
+        if ace_flags & win32security.INHERITED_ACE:
+            flags.append("Inherited")
     return flags
 
 def _get_permission_names(access_mask: int) -> List[str]:
@@ -159,33 +181,35 @@ def _get_permission_names(access_mask: int) -> List[str]:
     """
     permissions = []
     
-    # File permissions
-    if access_mask & ntsecuritycon.FILE_READ_DATA:
-        permissions.append("Read")
-    if access_mask & ntsecuritycon.FILE_WRITE_DATA:
-        permissions.append("Write")
-    if access_mask & ntsecuritycon.FILE_APPEND_DATA:
-        permissions.append("Append")
-    if access_mask & ntsecuritycon.FILE_EXECUTE:
-        permissions.append("Execute")
-    if access_mask & ntsecuritycon.DELETE:
-        permissions.append("Delete")
-    if access_mask & ntsecuritycon.READ_CONTROL:
-        permissions.append("Read Permissions")
-    if access_mask & ntsecuritycon.WRITE_DAC:
-        permissions.append("Change Permissions")
-    if access_mask & ntsecuritycon.WRITE_OWNER:
-        permissions.append("Take Ownership")
-    
-    # Generic permissions
-    if access_mask & ntsecuritycon.GENERIC_READ:
-        permissions.append("Generic Read")
-    if access_mask & ntsecuritycon.GENERIC_WRITE:
-        permissions.append("Generic Write")
-    if access_mask & ntsecuritycon.GENERIC_EXECUTE:
-        permissions.append("Generic Execute")
-    if access_mask & ntsecuritycon.GENERIC_ALL:
-        permissions.append("Full Control")
+    # Only try to decode permissions if we have the necessary module
+    if IS_WINDOWS and HAVE_WIN32SECURITY:
+        # File permissions
+        if access_mask & ntsecuritycon.FILE_READ_DATA:
+            permissions.append("Read")
+        if access_mask & ntsecuritycon.FILE_WRITE_DATA:
+            permissions.append("Write")
+        if access_mask & ntsecuritycon.FILE_APPEND_DATA:
+            permissions.append("Append")
+        if access_mask & ntsecuritycon.FILE_EXECUTE:
+            permissions.append("Execute")
+        if access_mask & ntsecuritycon.DELETE:
+            permissions.append("Delete")
+        if access_mask & ntsecuritycon.READ_CONTROL:
+            permissions.append("Read Permissions")
+        if access_mask & ntsecuritycon.WRITE_DAC:
+            permissions.append("Change Permissions")
+        if access_mask & ntsecuritycon.WRITE_OWNER:
+            permissions.append("Take Ownership")
+        
+        # Generic permissions
+        if access_mask & ntsecuritycon.GENERIC_READ:
+            permissions.append("Generic Read")
+        if access_mask & ntsecuritycon.GENERIC_WRITE:
+            permissions.append("Generic Write")
+        if access_mask & ntsecuritycon.GENERIC_EXECUTE:
+            permissions.append("Generic Execute")
+        if access_mask & ntsecuritycon.GENERIC_ALL:
+            permissions.append("Full Control")
     
     return permissions
 
@@ -246,7 +270,7 @@ def set_file_permissions(path: str, trustee: str, permissions: str,
             return False
         
         # Add ACE to DACL
-        ace_type = win32security.ACCESS_ALLOWED_ACE_TYPE if allow else win32security.ACCESS_DENIED_ACE_TYPE
+        ace_type = ACCESS_ALLOWED_ACE_TYPE if allow else ACCESS_DENIED_ACE_TYPE
         dacl.AddAccessAllowedAce(win32security.ACL_REVISION, access_mask, trustee_sid)
         
         # Set new DACL
@@ -512,7 +536,7 @@ def get_unc_share_permissions(server: str, share: str) -> Optional[Dict[str, Lis
                 perm_list = ["Full Control"]
             
             # Only include ALLOW aces (ignore DENY for now)
-            if ace_type == win32security.ACCESS_ALLOWED_ACE_TYPE:
+            if ace_type == ACCESS_ALLOWED_ACE_TYPE:
                 permissions[trustee] = perm_list
         
         return permissions

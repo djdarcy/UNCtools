@@ -10,7 +10,7 @@ import re
 import logging
 import subprocess
 from pathlib import Path
-from typing import Dict, Union, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
 # Import from our own modules
 from .converter import get_mappings
@@ -168,7 +168,7 @@ def get_drive_type(drive: Union[str, Path]) -> str:
     
     return result
 
-def is_network_drive(drive: Union[str, Path]) -> bool:
+def is_network_drive(drive: Union[str, Path, None]) -> bool:
     """
     Determine if a drive is a network drive.
     
@@ -178,9 +178,13 @@ def is_network_drive(drive: Union[str, Path]) -> bool:
     Returns:
         True if the drive is a network drive, False otherwise.
     """
+    # Handle None input
+    if drive is None:
+        return False
+        
     return get_drive_type(drive) == PATH_TYPE_NETWORK
 
-def is_subst_drive(drive: Union[str, Path]) -> bool:
+def is_subst_drive(drive: Union[str, Path, None]) -> bool:
     """
     Determine if a drive is a substituted (subst) drive.
     
@@ -190,6 +194,10 @@ def is_subst_drive(drive: Union[str, Path]) -> bool:
     Returns:
         True if the drive is a substituted drive, False otherwise.
     """
+    # Handle None input
+    if drive is None:
+        return False
+        
     # Extract drive letter if a full path was provided
     drive_str = str(drive)
     match = re.match(r'^([A-Za-z]:)', drive_str)
@@ -268,7 +276,7 @@ def get_subst_target(drive: Union[str, Path]) -> Optional[str]:
         logger.warning(f"Failed to get subst target for {drive_letter}: {e}")
         return None
 
-def get_network_target(drive: Union[str, Path]) -> Optional[str]:
+def get_network_target(drive: Union[str, Path, None]) -> Optional[str]:
     """
     Get the UNC path target of a network drive.
     
@@ -279,6 +287,10 @@ def get_network_target(drive: Union[str, Path]) -> Optional[str]:
         The UNC path target of the network drive, or None if the drive is not a network drive
         or if the target cannot be determined.
     """
+    # Handle None input
+    if drive is None:
+        return None
+        
     # Extract drive letter if a full path was provided
     drive_str = str(drive)
     match = re.match(r'^([A-Za-z]:)', drive_str)
@@ -314,7 +326,8 @@ def get_network_target(drive: Union[str, Path]) -> Optional[str]:
         output = subprocess.check_output(['net', 'use', drive_letter], text=True, stderr=subprocess.STDOUT)
         
         # Look for the remote name in the output
-        match = re.search(r'Remote name\s+(\\\\\S+)', output, re.IGNORECASE)
+        # Using raw string for regex pattern to fix escape sequences
+        match = re.search(r'Remote name\s+(\\\\[^\s]+)', output, re.IGNORECASE)
         if match:
             return match.group(1)
     except Exception as e:

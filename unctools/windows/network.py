@@ -31,7 +31,7 @@ if IS_WINDOWS:
         HAVE_WIN32NET = True
     except ImportError:
         HAVE_WIN32NET = False
-        logger.warning("win32net module not available. Using command-line fallbacks for network operations.")
+        logger.debug("win32net module not available. Using command-line fallbacks for network operations.")
 else:
     HAVE_WIN32NET = False
 
@@ -333,7 +333,7 @@ def get_server_shares(server: str, username: Optional[str] = None,
                 
                 for share in share_info:
                     share_name = share.get('netname', '')
-                    if share_name and not share_name.endswith('):  # Exclude hidden shares
+                    if share_name and not share_name.endswith('$'):  # Exclude hidden shares
                         shares.append(share_name)
             finally:
                 # Clean up temporary connection if we created one
@@ -361,7 +361,7 @@ def get_server_shares(server: str, username: Optional[str] = None,
                 match = re.search(r'(\S+)\s+Disk\s+', line, re.IGNORECASE)
                 if match:
                     share_name = match.group(1)
-                    if not share_name.endswith('):  # Exclude hidden shares
+                    if not share_name.endswith('$'):  # Exclude hidden shares
                         shares.append(share_name)
             
             return shares

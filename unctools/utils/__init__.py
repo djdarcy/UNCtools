@@ -1,4 +1,4 @@
-"""
+r"""
 Utility functions and helpers for UNCtools.
 
 This subpackage contains utility functions and helpers used across the UNCtools library,
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Import key functions for the package namespace
 from .logger import configure_logging, get_logger
-from .compat import is_windows, is_linux, is_macos, get_platform_info
+from .compat import is_windows, is_linux, is_macos, get_platform_info, is_module_available, safe_import
 from .validation import validate_path, validate_unc_path, validate_local_path
 
 # For convenience, re-export platform detection in the utils namespace
@@ -32,6 +32,8 @@ __all__ = [
     'is_linux',
     'is_macos',
     'get_platform_info',
+    'is_module_available',
+    'safe_import',
     'validate_path',
     'validate_unc_path',
     'validate_local_path'

@@ -1,4 +1,4 @@
-"""
+r"""
 High-level file operations for working with UNC paths and network drives.
 
 This module provides functions for higher-level operations like safely opening files,
@@ -147,7 +147,7 @@ def safe_copy(src: Union[str, Path], dst: Union[str, Path],
         **kwargs: Additional keyword arguments to pass to shutil.copy2.
         
     Returns:
-        The path of the destination file.
+        The path of the destination file as a string.
         
     Raises:
         FileNotFoundError: If the source file does not exist.
@@ -159,7 +159,8 @@ def safe_copy(src: Union[str, Path], dst: Union[str, Path],
     
     try:
         # First try to copy the file as-is
-        return shutil.copy2(original_src, original_dst, **kwargs)
+        shutil.copy2(original_src, original_dst, **kwargs)
+        return str(original_dst)  # Always return the destination path string
     except PermissionError:
         # If we get a permission error and conversion is enabled, try converting the paths
         if convert_paths:
@@ -168,7 +169,7 @@ def safe_copy(src: Union[str, Path], dst: Union[str, Path],
             
             # Convert source path
             try:
-                if is_unc_path(original_src):
+                if is_unc_path(str(original_src)):  # Convert to string before checking
                     local_src = convert_to_local(original_src)
                     if local_src != original_src:
                         path_variants.append((local_src, original_dst))
@@ -181,7 +182,7 @@ def safe_copy(src: Union[str, Path], dst: Union[str, Path],
             
             # Convert destination path
             try:
-                if is_unc_path(original_dst):
+                if is_unc_path(str(original_dst)):  # Convert to string before checking
                     local_dst = convert_to_local(original_dst)
                     if local_dst != original_dst:
                         path_variants.append((original_src, local_dst))
@@ -211,7 +212,9 @@ def safe_copy(src: Union[str, Path], dst: Union[str, Path],
             for src_variant, dst_variant in path_variants:
                 try:
                     logger.debug(f"Trying copy with converted paths: {src_variant} -> {dst_variant}")
-                    return shutil.copy2(src_variant, dst_variant, **kwargs)
+                    # Make sure to return a string, not the result from shutil.copy2 which may be a Path
+                    shutil.copy2(src_variant, dst_variant, **kwargs)
+                    return str(dst_variant)  # Return the destination path as a string
                 except Exception as e:
                     logger.debug(f"Copy attempt failed: {e}")
         
@@ -219,7 +222,7 @@ def safe_copy(src: Union[str, Path], dst: Union[str, Path],
         raise
 
 def batch_copy(src_paths: List[Union[str, Path]], dst_dir: Union[str, Path], 
-              convert_paths: bool = True) -> Dict[str, Tuple[bool, Optional[str]]]:
+              convert_paths: bool = True, max_retries: int = 1) -> Dict[str, Tuple[bool, Optional[str]]]:
     """
     Copy multiple files to a destination directory, handling UNC paths.
     
@@ -227,6 +230,7 @@ def batch_copy(src_paths: List[Union[str, Path]], dst_dir: Union[str, Path],
         src_paths: List of source file paths to copy.
         dst_dir: Destination directory.
         convert_paths: Whether to automatically convert between UNC and local paths.
+        max_retries: Maximum number of retries for each file if copy fails.
         
     Returns:
         A dictionary mapping source paths to tuples of (success, destination_path).
@@ -243,7 +247,7 @@ def batch_copy(src_paths: List[Union[str, Path]], dst_dir: Union[str, Path],
         # If conversion is enabled, try with converted path
         if convert_paths:
             try:
-                if is_unc_path(dst_dir_path):
+                if is_unc_path(str(dst_dir_path)):  # Convert Path to string before checking
                     local_dst_dir = convert_to_local(dst_dir_path)
                     if local_dst_dir != dst_dir_path:
                         logger.debug(f"Trying to create directory with converted path: {local_dst_dir}")
@@ -268,12 +272,35 @@ def batch_copy(src_paths: List[Union[str, Path]], dst_dir: Union[str, Path],
         filename = src_path.name
         dst_path = dst_dir_path / filename
         
-        try:
-            # Attempt to copy the file
-            dst_result = safe_copy(src_path, dst_path, convert_paths=convert_paths)
+        # Try to copy with retries
+        success = False
+        dst_result = None
+        retry_count = 0
+        last_error = None
+        
+        while not success and retry_count <= max_retries:
+            try:
+                # Attempt to copy the file
+                dst_result = safe_copy(src_path, dst_path, convert_paths=convert_paths)
+                # If we get here, the copy was successful
+                success = True
+                # Ensure the result is a string for consistency
+                dst_result = str(dst_result) if dst_result is not None else None
+            except Exception as e:
+                last_error = e
+                if retry_count < max_retries:
+                    logger.debug(f"Copy attempt {retry_count + 1} failed for {src_path}, retrying: {e}")
+                    retry_count += 1
+                else:
+                    # Last attempt failed
+                    logger.error(f"Failed to copy {src_path} to {dst_path} after {max_retries + 1} attempts: {e}")
+                    break
+        
+        # Record the result for this file
+        if success:
             results[str(src)] = (True, dst_result)
-        except Exception as e:
-            logger.error(f"Failed to copy {src_path} to {dst_path}: {e}")
+        else:
+            logger.error(f"Failed to copy {src_path} to {dst_path}: {last_error}")
             results[str(src)] = (False, None)
     
     return results
@@ -301,7 +328,7 @@ def process_files(directory: Union[str, Path], callback: Callable[[Path], Any],
     # Check if we need to try a path conversion
     if not os.path.exists(dir_path) and convert_paths:
         try:
-            if is_unc_path(dir_path):
+            if is_unc_path(str(dir_path)):  # Convert Path to string before checking
                 local_dir = convert_to_local(dir_path)
                 if local_dir != dir_path and os.path.exists(local_dir):
                     logger.debug(f"Converting UNC path {dir_path} to local path {local_dir}")
@@ -408,20 +435,26 @@ def get_unc_path_elements(path: Union[str, Path]) -> Optional[Tuple[str, str, st
         A tuple of (server, share, relative_path) if the path is a valid UNC path,
         or None if the path is not a UNC path.
     """
-    path_str = str(path).replace('/', '\\')
+    original_path_str = str(path)
+    path_str = original_path_str.replace('/', '\\')
     
     # Check if it's a UNC path
     if not path_str.startswith('\\\\'):
         return None
     
     # Parse the UNC path
-    match = re.match(r'^\\\\([^\\]+)\\([^\\]+)(?:\\(.*))?, path_str)
+    match = re.match(r'^\\\\([^\\]+)\\([^\\]+)(?:\\(.*))?', path_str)
     if match:
         server = match.group(1)
         share = match.group(2)
         relative_path = match.group(3) or ""
+        
+        # If original path used forward slashes, preserve them in the relative path
+        if '/' in original_path_str:
+            # Replace backslashes with forward slashes in the relative path
+            relative_path = relative_path.replace('\\', '/')
+            
         return (server, share, relative_path)
-    
     return None
 
 def build_unc_path(server: str, share: str, relative_path: Optional[str] = None) -> str:
@@ -442,7 +475,7 @@ def build_unc_path(server: str, share: str, relative_path: Optional[str] = None)
         return unc_base
     
     # Ensure relative path doesn't start with a backslash
-    rel_path = relative_path.lstrip('\\')
+    rel_path = relative_path.lstrip('\\').lstrip('/')
     
     if rel_path:
         return f"{unc_base}\\{rel_path}"
@@ -481,7 +514,7 @@ def is_path_accessible(path: Union[str, Path], check_both_paths: bool = True) ->
     if check_both_paths:
         try:
             # Try the converted path
-            if is_unc_path(path):
+            if is_unc_path(str(path)):  # Convert Path to string before checking
                 local_path = convert_to_local(path)
                 if local_path != path:
                     return is_path_accessible(local_path, check_both_paths=False)
@@ -512,7 +545,7 @@ def find_accessible_path(path: Union[str, Path]) -> Optional[Path]:
     
     # Try converted paths
     try:
-        if is_unc_path(original_path):
+        if is_unc_path(str(original_path)):  # Convert Path to string before checking
             # Try local path
             local_path = convert_to_local(original_path)
             if local_path != original_path and is_path_accessible(local_path, check_both_paths=False):

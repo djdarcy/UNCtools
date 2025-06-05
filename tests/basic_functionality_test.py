@@ -8,10 +8,23 @@ work correctly in your environment.
 """
 
 import os
+os.system("chcp 65001 > nul")  # Set console to UTF-8
+
 import sys
 import platform
 import logging
 from pathlib import Path
+
+
+import unctools
+print("UNCTools loaded from:", unctools.__file__)
+
+import sys
+print("Python version:", sys.version)
+
+# import tests
+# print("tests loaded from:", tests.__file__)
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, 
@@ -20,10 +33,10 @@ logging.basicConfig(level=logging.INFO,
 def check(condition, message):
     """Check a condition and print the result."""
     if condition:
-        print(f"✓ {message}")
+        print(f"[PASS] {message}")
         return True
     else:
-        print(f"✗ {message}")
+        print(f"[FAIL] {message}")
         return False
 
 def run_tests():
