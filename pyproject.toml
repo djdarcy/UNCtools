@@ -30,10 +30,14 @@ classifiers = [
 ]
 keywords = ["unc", "network", "windows", "path", "file", "share", "subst"]
 dependencies = [
+    "pathlib;python_version<\"3.4\""
 ]
 
 [project.optional-dependencies]
-windows = ["pywin32"]
+windows = [
+    "pywin32>=223",
+    "pypiwin32>=223"
+]
 dev = [
     "pytest>=6.0.0",
     "pytest-cov>=2.10.0",
@@ -41,11 +45,17 @@ dev = [
     "black>=20.8b1",
     "tox>=3.20.0",
 ]
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=0.5.0",
+    "myst-parser>=0.15.0",
+]
 
 [project.urls]
-"Homepage" = "https://github.com/yourusername/unctools"
-"Bug Reports" = "https://github.com/yourusername/unctools/issues"
-"Source" = "https://github.com/yourusername/unctools"
+"Homepage" = "https://github.com/djdarcy/unctools"
+"Bug Reports" = "https://github.com/djdarcy/unctools/issues"
+"Source" = "https://github.com/djdarcy/unctools"
+"Documentation" = "https://github.com/djdarcy/unctools#readme"
 
 [tool.setuptools]
 packages = ["unctools"]
@@ -53,11 +63,21 @@ packages = ["unctools"]
 [tool.setuptools.dynamic]
 version = {attr = "unctools.__version__"}
 
+[tool.setuptools.package-data]
+unctools = ["py.typed"]
+
 [tool.black]
-line-length = 88
-target-version = ["py36", "py37", "py38", "py39"]
+line-length = 100
+target-version = ["py36", "py37", "py38", "py39", "py310"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "--cov=unctools --cov-report=term-missing"
+
+[tool.mypy]
+python_version = "3.6"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

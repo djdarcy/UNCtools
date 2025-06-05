@@ -1,4 +1,4 @@
-"""
+r"""
 Path conversion utilities for UNC paths, network drives, and substituted drives.
 
 This module provides functions to convert between UNC paths (\\server\share) and
@@ -15,20 +15,31 @@ from typing import Dict, Union, Optional, Tuple
 # Set up module-level logger
 logger = logging.getLogger(__name__)
 
-# Try to import Windows-specific modules
-try:
-    import win32net
-    HAVE_WIN32NET = True
-except ImportError:
-    HAVE_WIN32NET = False
-    logger.debug("win32net module not available. Some Windows-specific features will use fallbacks.")
+# Define if we're running on Windows
+IS_WINDOWS = os.name == 'nt'
+
+# Global flag for win32net availability
+HAVE_WIN32NET = False
+
+# Only try to import Windows-specific modules if we're on Windows
+if IS_WINDOWS:
+    from unctools.utils.compat import is_module_available
+    
+    # Check if win32net is available without importing it
+    if is_module_available('win32net'):
+        try:
+            import win32net
+            HAVE_WIN32NET = True
+        except ImportError:
+            # This should rarely happen since we checked for availability
+            logger.debug("win32net module found but failed to import.")
 
 # Define constants
 UNC_PATTERN = re.compile(r'^\\\\([^\\]+)\\([^\\]+)(?:\\(.*))?$')
 DRIVE_LETTER_PATTERN = re.compile(r'^([A-Za-z]:)(?:\\(.*))?$')
 
 class UNCConverter:
-    """
+    r"""
     Handles conversion between UNC paths and mapped drive paths.
     
     This class provides methods to convert UNC paths (\\server\share) to their 
@@ -48,7 +59,7 @@ class UNCConverter:
         self._reverse_mapping: Dict[str, str] = {}  # drive letter -> UNC prefix
         
         # Windows network share command is only available on Windows
-        self._is_windows = os.name == 'nt'
+        self._is_windows = IS_WINDOWS
         
         if refresh_on_init:
             self.refresh_mappings()
@@ -70,11 +81,8 @@ class UNCConverter:
         
         # Try to use win32net if available
         if HAVE_WIN32NET:
-            try:
-                self._get_mappings_with_win32net()
-                logger.debug(f"Refreshed network mappings using win32net: {self._mapping}")
-            except Exception as e:
-                logger.warning(f"Failed to get network mappings using win32net: {e}")
+            success = self._get_mappings_with_win32net()
+            if not success:
                 # Fall back to subprocess
                 self._get_mappings_with_subprocess()
         else:
@@ -87,16 +95,22 @@ class UNCConverter:
             
         return self._mapping
     
-    def _get_mappings_with_win32net(self) -> None:
+    def _get_mappings_with_win32net(self) -> bool:
         """
         Get network mappings using the win32net API.
         
         This method populates the internal mapping dictionaries.
+        
+        Returns:
+            True if successful, False otherwise.
         """
         if not HAVE_WIN32NET:
-            return
+            return False
             
         try:
+            # Import here to ensure it's only imported when needed
+            import win32net
+            
             # Level 2 provides detailed information
             connections, total, resume = win32net.NetUseEnum(None, 2)
             
@@ -116,9 +130,10 @@ class UNCConverter:
                     self._reverse_mapping[local.rstrip('\\')] = remote
             
             logger.debug(f"Retrieved {len(self._mapping)} network mappings using win32net")
+            return True
         except Exception as e:
-            logger.error(f"Error in win32net.NetUseEnum: {e}")
-            raise
+            logger.warning(f"Error in win32net.NetUseEnum: {e}")
+            return False
     
     def _get_mappings_with_subprocess(self) -> None:
         """
