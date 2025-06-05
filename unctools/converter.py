@@ -192,7 +192,7 @@ class UNCConverter:
             if path_str.lower().startswith(unc_prefix.lower()):
                 # Replace the UNC prefix with the drive letter
                 local_part = path_str[len(unc_prefix):]
-                drive_path = f"{self._mapping[unc_prefix]}{local_part.lstrip('\\')}"
+                drive_path = f"{self._mapping[unc_prefix]}{local_part.lstrip(chr(92))}"
                 logger.debug(f"Converted UNC path '{path_str}' to local path '{drive_path}'")
                 return Path(drive_path)
         
@@ -229,8 +229,8 @@ class UNCConverter:
         if drive_no_slash in self._reverse_mapping:
             unc_prefix = self._reverse_mapping[drive_no_slash]
             # Replace the drive with the UNC path
-            rest_of_path = path_str[len(drive_no_slash):].lstrip('\\')
-            unc_path = f"{unc_prefix}\\{rest_of_path}"
+            rest_of_path = path_str[len(drive_no_slash):].lstrip(chr(92))
+            unc_path = f"{unc_prefix}{chr(92)}{rest_of_path}"
             logger.debug(f"Converted local path '{path_str}' to UNC path '{unc_path}'")
             return Path(unc_path)
         
