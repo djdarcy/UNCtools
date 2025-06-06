@@ -140,3 +140,10 @@ Thumbs.db
 *.dazzlelink
 *.temp_rename
 logs/
+
+# RepoKit Private Content (DO NOT REMOVE)
+CLAUDE.md
+private/claude/
+private/docs/
+private/notes/
+private/temp/
