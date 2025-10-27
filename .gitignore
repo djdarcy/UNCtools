@@ -1,7 +1,48 @@
+<<<<<<< HEAD
+=======
+# Enhanced .gitignore for RepoKit Projects
+# This template provides comprehensive exclusions for various languages and tools
+
+#######################
+# Common ignored files #
+#######################
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+*.*~
+
+#######################
+# Project Directories #
+#######################
+
+# RepoKit standard private directories
+/private/
+/convos/
+/logs/
+/credentials/
+/secrets/
+**/__private__*
+
+# Local development files
+local/
+.local/
+.dev/
+
+#######################
+# Python              #
+#######################
+
+>>>>>>> origin/dev
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+<<<<<<< HEAD
 
 # C extensions
 *.so
@@ -11,6 +52,15 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+=======
+*.so
+.Python
+
+# Distribution / packaging
+dist/
+build/
+develop-eggs/
+>>>>>>> origin/dev
 downloads/
 eggs/
 .eggs/
@@ -20,11 +70,16 @@ parts/
 sdist/
 var/
 wheels/
+<<<<<<< HEAD
+=======
+share/python-wheels/
+>>>>>>> origin/dev
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
+<<<<<<< HEAD
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -42,12 +97,30 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+=======
+# Virtual environments
+venv/
+env/
+ENV/
+.env/
+.venv/
+env.bak/
+venv.bak/
+pythonenv*
+
+# Testing / coverage
+.tox/
+.coverage
+.coverage.*
+.cache/
+>>>>>>> origin/dev
 nosetests.xml
 coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
 .pytest_cache/
+<<<<<<< HEAD
 
 # Translations
 *.mo
@@ -147,3 +220,74 @@ private/claude/
 private/docs/
 private/notes/
 private/temp/
+=======
+cover/
+htmlcov/
+
+#######################
+# IDEs and Editors    #
+#######################
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+out/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+#######################
+# Security & Secrets  #
+#######################
+
+# Token and credential files
+*token*
+*credential*
+*secret*
+*password*
+.env
+.secret
+credentials.json
+*auth*.json
+*config*.json
+
+# Project-specific directories
+/log/
+/logs/
+/private/
+/convos/
+
+#######################
+# Project Specific    #
+#######################
+
+# Add custom patterns below
+
+# RepoKit Private Content Protection (DO NOT REMOVE)
+CLAUDE.md
+**/private_*
+.env.private
+test-runs/
+private/docs/
+private/temp/
+private/notes/
+revisions/
+test_runs/
+private/claude/
+>>>>>>> origin/dev

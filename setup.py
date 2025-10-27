@@ -12,7 +12,7 @@ with open('unctools/__init__.py', 'r') as f:
             version = line.split('=')[1].strip().strip("'\"")
             break
     else:
-        version = '0.1.0'
+        version = '0.1.1'
 
 # Read long description from README.md
 if os.path.exists('README.md'):
@@ -75,4 +75,4 @@ setup(
         'Bug Reports': 'https://github.com/djdarcy/unctools/issues',  # Replace with your repo
         'Source': 'https://github.com/djdarcy/unctools',  # Replace with your repo
     },
-)
+)11
