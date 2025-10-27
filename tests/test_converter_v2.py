@@ -7,6 +7,7 @@ import os
 import sys
 import logging
 from pathlib import Path
+import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -116,6 +117,7 @@ def test_convert_to_local():
     result = converter.convert_to_local(unc_with_slashes)
     assert_equal(result, Path(TEST_LOCAL_PATH))
 
+@pytest.mark.skipif(os.name != 'nt', reason="Windows-specific test - UNC paths and drive letters are Windows concepts")
 def test_convert_to_unc():
     """Test convert_to_unc method."""
     converter = create_mock_mappings()

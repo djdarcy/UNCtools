@@ -9,6 +9,7 @@ import logging
 import subprocess
 from pathlib import Path
 from unittest import mock
+import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -236,6 +237,7 @@ def test_get_path_type():
         assert_equal(get_path_type(None), PATH_TYPE_UNKNOWN, 
                     "None should be detected as unknown type")
 
+@pytest.mark.skipif(os.name != 'nt', reason="Windows-specific test - tests security zone functionality")
 def test_detect_path_issues():
     """Test detect_path_issues function."""
     # Mock functions to control behavior
@@ -324,6 +326,7 @@ def test_is_server_in_intranet_zone():
         result = is_server_in_intranet_zone("server")
         assert_false(result, "Server should not be detected in intranet zone when registry key not found")
 
+@pytest.mark.skipif(os.name != 'nt', reason="Windows-specific test - tests network drive mapping functionality")
 def test_get_network_mappings():
     """Test get_network_mappings function."""
     # Mock get_mappings to return a known dictionary

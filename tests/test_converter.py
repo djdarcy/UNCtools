@@ -100,6 +100,7 @@ class TestUNCConverter:
         result = converter.convert_to_local(unc_with_slashes)
         assert result == Path(TEST_LOCAL_PATH)
     
+    @pytest.mark.skipif(os.name != 'nt', reason="Windows-specific test - UNC paths and drive letters are Windows concepts")
     def test_convert_to_unc(self, converter):
         """Test convert_to_unc method."""
         # Test conversion of a local path
