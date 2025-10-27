@@ -52,7 +52,7 @@ def _clear_path_type_cache() -> None:
     _path_type_cache.clear()
 
 def is_unc_path(path: Union[str, Path]) -> bool:
-    """
+    r"""
     Determine if a path is a UNC path (starts with \\server\share).
     
     Args:
@@ -337,12 +337,12 @@ def get_network_target(drive: Union[str, Path, None]) -> Optional[str]:
     return None
 
 def get_path_type(path: Union[str, Path]) -> str:
-    """
+    r"""
     Determine the type of a path.
-    
+
     Args:
         path: The path to check.
-        
+
     Returns:
         A string indicating the path type:
         - 'unc': UNC path (\\server\share)
