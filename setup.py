@@ -75,4 +75,4 @@ setup(
         'Bug Reports': 'https://github.com/djdarcy/unctools/issues',  # Replace with your repo
         'Source': 'https://github.com/djdarcy/unctools',  # Replace with your repo
     },
-)11
+)
