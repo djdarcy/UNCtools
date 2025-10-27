@@ -4,42 +4,91 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        // === TEST DEBUGGING CONFIGURATIONS ===
+        {
+            "name": "Debug: Current Test File",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v",
+                "-s"  // Show print statements
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONDONTWRITEBYTECODE": "1"
+            }
+        },
+        {
+            "name": "Debug: Specific Test Method",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                // EDIT THIS LINE with file::class::method format
+                "tests/test_detector.py::TestDetector::test_is_unc_path",
+                "-v",
+                "-s"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONDONTWRITEBYTECODE": "1"
+            }
+        },
+        {
+            "name": "Run: All Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONDONTWRITEBYTECODE": "1"
+            }
+        },
+        {
+            "name": "Run: All Tests with Coverage",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v",
+                "--cov=unctools",
+                "--cov-report=term-missing"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONDONTWRITEBYTECODE": "1"
+            }
+        },
+        // === ORIGINAL CONFIGURATIONS ===
         {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false,
+            "env": {
+                "PYTHONDONTWRITEBYTECODE": "1"
+            }
         },
         {
-            "name": "Python: Module",
+            "name": "Python: Module (unctools)",
             "type": "python",
             "request": "launch",
-            "module": "UNCtools_test_selective",
+            "module": "unctools",
             "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: Current File with Arguments",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "args": [
-                // Add your arguments here
-                // Examples:
-                // "--input", "${workspaceFolder}/data/input.txt",
-                // "--output", "${workspaceFolder}/data/output.txt",
-                // Use VS Code's input picker to add arguments at runtime
-                "${command:pickArgs}"
-            ]
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Server/Client",
-            "configurations": ["Python: Module", "Python: Current File"]
+            "justMyCode": false
         }
     ]
 }
