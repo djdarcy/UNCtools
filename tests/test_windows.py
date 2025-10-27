@@ -143,6 +143,7 @@ def test_check_network_connection():
         assert_false(result, "check_network_connection should return False when unsuccessful")
 
 @skip_if_not_windows
+@skip_if_no_module('win32security')
 def test_security_functions():
     """Test file security functions."""
     # Import the function directly

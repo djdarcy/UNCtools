@@ -142,7 +142,11 @@ def skip_if_not_windows(fn):
     """Decorator to skip a test if not running on Windows."""
     def wrapper(*args, **kwargs):
         if os.name != 'nt':
-            raise SkipTest("Test only runs on Windows")
+            try:
+                import pytest
+                pytest.skip("Test only runs on Windows")
+            except ImportError:
+                raise SkipTest("Test only runs on Windows")
         return fn(*args, **kwargs)
     return wrapper
 
@@ -150,7 +154,11 @@ def skip_if_windows(fn):
     """Decorator to skip a test if running on Windows."""
     def wrapper(*args, **kwargs):
         if os.name == 'nt':
-            raise SkipTest("Test only runs on non-Windows platforms")
+            try:
+                import pytest
+                pytest.skip("Test only runs on non-Windows platforms")
+            except ImportError:
+                raise SkipTest("Test only runs on non-Windows platforms")
         return fn(*args, **kwargs)
     return wrapper
 
@@ -161,7 +169,11 @@ def skip_if_no_module(module_name):
             try:
                 __import__(module_name)
             except ImportError:
-                raise SkipTest(f"Required module {module_name} not available")
+                try:
+                    import pytest
+                    pytest.skip(f"Required module {module_name} not available")
+                except ImportError:
+                    raise SkipTest(f"Required module {module_name} not available")
             return fn(*args, **kwargs)
         return wrapper
     return decorator
