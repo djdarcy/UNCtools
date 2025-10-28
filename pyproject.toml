@@ -57,8 +57,10 @@ docs = [
 "Source" = "https://github.com/djdarcy/unctools"
 "Documentation" = "https://github.com/djdarcy/unctools#readme"
 
-[tool.setuptools]
-packages = ["unctools"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["unctools*"]
+exclude = ["tests*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "unctools.__version__"}
